@@ -14,7 +14,7 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: Spacing.xlarge) {
                 // Header with disk info
                 diskOverviewCard
 
@@ -26,141 +26,143 @@ struct DashboardView: View {
                 // Quick actions
                 quickActionsCard
             }
-            .padding(24)
+            .padding(Spacing.xlarge)
         }
         .navigationTitle("Dashboard")
         .task {
-            // Load data when the view first appears.
-            // .task automatically runs on a background thread.
             await viewModel.loadData()
         }
         .overlay {
             if viewModel.isLoading {
-                ProgressView("Scanning disk…")
-                    .padding(24)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                ScanningEmptyState(message: "Scanning disk…")
+                    .background(.ultraThinMaterial)
             }
         }
     }
 
     // MARK: - Disk Overview Card
-    // Shows total disk, used, and free space with a progress ring.
+    // Shows total disk, used, and free space with an animated progress ring.
     private var diskOverviewCard: some View {
-        GroupBox {
-            VStack(spacing: 16) {
+        CardContainer(isElevated: true) {
+            VStack(spacing: Spacing.large) {
                 if let info = viewModel.diskInfo {
-                    HStack(spacing: 32) {
-                        // Progress ring showing used/free ratio
-                        ZStack {
-                            Circle()
-                                .stroke(Color.gray.opacity(0.2), lineWidth: 16)
-                                .frame(width: 160, height: 160)
+                    HStack(spacing: Spacing.xxlarge) {
+                        // Animated progress ring showing used/free ratio
+                        AnimatedProgressRing(
+                            percentage: info.usedPercentage,
+                            availableBytes: info.availableSpace,
+                            size: 160,
+                            lineWidth: 20
+                        )
 
-                            Circle()
-                                .trim(from: 0, to: info.usedPercentage)
-                                .stroke(
-                                    usedColor(for: info.usedPercentage),
-                                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                                )
-                                .frame(width: 160, height: 160)
-                                .rotationEffect(.degrees(-90))
-
-                            VStack(spacing: 4) {
-                                Text(info.formattedAvailable)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                Text("Available")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        // Disk info details
-                        VStack(alignment: .leading, spacing: 12) {
+                        // Disk info details with improved typography
+                        VStack(alignment: .leading, spacing: Spacing.medium) {
                             StatusRow(
-                                icon: "internaldrive",
+                                icon: "internaldrive.fill",
                                 label: "Total Capacity",
                                 value: info.formattedTotal,
                                 iconColor: .blue
                             )
+
+                            Divider()
+
                             StatusRow(
                                 icon: "circle.fill",
                                 label: "Used",
                                 value: info.formattedUsed,
-                                iconColor: .orange
+                                iconColor: usedColor(for: info.usedPercentage)
                             )
+
                             StatusRow(
-                                icon: "circle.dashed",
+                                icon: "checkmark.circle.fill",
                                 label: "Available",
                                 value: info.formattedAvailable,
                                 iconColor: .green
                             )
-                            StatusRow(
-                                icon: "percent",
-                                label: "Usage",
-                                value: FileSizeFormatter.percentageString(fromFraction: info.usedPercentage),
-                                iconColor: usedColor(for: info.usedPercentage)
-                            )
+
+                            Divider()
+
+                            HStack(spacing: Spacing.compact) {
+                                Image(systemName: "percent")
+                                    .foregroundStyle(usedColor(for: info.usedPercentage))
+                                    .frame(width: 20)
+
+                                Text("Usage")
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+
+                                Text(FileSizeFormatter.percentageString(fromFraction: info.usedPercentage))
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(usedColor(for: info.usedPercentage))
+                            }
+                            .font(.subheadline)
                         }
+                        .frame(width: 200)
 
                         Spacer()
                     }
                 } else {
-                    Text("Unable to read disk information")
-                        .foregroundStyle(.secondary)
+                    EmptyStateView(
+                        icon: "internaldrive.badge.exclamationmark",
+                        title: "Unable to Read Disk",
+                        description: "SpaceSaver couldn't access your disk information. This might be a permissions issue.",
+                        action: {
+                            Task { await viewModel.loadData() }
+                        },
+                        actionLabel: "Try Again"
+                    )
                 }
             }
-            .padding(8)
+            .padding(Spacing.compact)
         } label: {
-            Label("Disk Usage", systemImage: "internaldrive")
-                .font(.headline)
+            Label("Disk Usage", systemImage: "internaldrive.fill")
         }
     }
 
     // MARK: - Category Chart
     // Horizontal bar chart showing disk usage by category.
-    // Broken into a separate build expression to avoid "unable to type-check" errors.
     private var categoryChart: some View {
-        GroupBox {
-            chartContent
-                .chartXAxis {
-                    AxisMarks(values: .automatic(desiredCount: 5)) { value in
-                        AxisValueLabel {
-                            if let intValue = value.as(Int64.self) {
-                                Text(FileSizeFormatter.string(fromBytes: intValue))
-                                    .font(.caption2)
-                            }
+        CardContainer {
+            Chart(viewModel.categories) { category in
+                BarMark(
+                    x: .value("Size", category.sizeInBytes),
+                    y: .value("Category", category.name)
+                )
+                .foregroundStyle(by: .value("Category", category.name))
+                .annotation(position: .trailing) {
+                    Text(category.formattedSize)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                        .foregroundStyle(.secondary.opacity(0.2))
+                    AxisValueLabel {
+                        if let intValue = value.as(Int64.self) {
+                            Text(FileSizeFormatter.string(fromBytes: intValue))
+                                .font(.caption2)
                         }
                     }
                 }
-                .frame(height: CGFloat(viewModel.categories.count) * 30 + 20)
-        } label: {
-            Label("Storage Breakdown", systemImage: "chart.bar")
-                .font(.headline)
-        }
-    }
-
-    /// Extracted chart body to simplify type-checking.
-    private var chartContent: some View {
-        Chart(viewModel.categories) { category in
-            BarMark(
-                x: .value("Size", category.sizeInBytes),
-                y: .value("Category", category.name)
-            )
-            .foregroundStyle(by: .value("Category", category.name))
-            .annotation(position: .trailing) {
-                Text(category.formattedSize)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
+            .chartYAxis {
+                AxisMarks(stroke: StrokeStyle(lineWidth: 0))
+            }
+            .chartLegend(.hidden)
+            .frame(height: CGFloat(viewModel.categories.count) * 40 + 40)
+        } label: {
+            Label("Storage Breakdown", systemImage: "chart.bar.fill")
         }
     }
 
     // MARK: - Quick Actions
     // Buttons for common cleanup actions.
     private var quickActionsCard: some View {
-        GroupBox {
-            HStack(spacing: 16) {
+        CardContainer {
+            HStack(spacing: Spacing.large) {
                 Spacer()
 
                 quickActionButton(
@@ -189,10 +191,9 @@ struct DashboardView: View {
 
                 Spacer()
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.compact)
         } label: {
-            Label("Quick Actions", systemImage: "bolt")
-                .font(.headline)
+            Label("Quick Actions", systemImage: "bolt.fill")
         }
     }
 
@@ -204,10 +205,11 @@ struct DashboardView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: Spacing.compact) {
                 Image(systemName: icon)
-                    .font(.title)
+                    .font(.title2)
                     .foregroundStyle(color)
+                    .symbolRenderingMode(.hierarchical)
 
                 Text(title)
                     .font(.caption)
@@ -216,7 +218,8 @@ struct DashboardView: View {
             }
             .frame(width: 100, height: 80)
             .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.large))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -228,9 +231,13 @@ struct DashboardView: View {
     private func usedColor(for percentage: Double) -> Color {
         switch percentage {
         case ..<0.7:  return .green
-        case 0.7..<0.9: return .yellow
+        case 0.7..<0.9: return .orange
         default:      return .red
         }
     }
 }
 
+// MARK: - Preview
+#Preview {
+    DashboardView()
+}

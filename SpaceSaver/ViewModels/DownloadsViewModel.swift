@@ -19,15 +19,25 @@ final class DownloadsViewModel: ObservableObject {
     @Published var isDeleting = false
 
     // MARK: - Filter State
-    @Published var filterDays: Int = 30   // Show files older than N days
-    @Published var filterMode: FilterMode = .olderThan
+    @Published var filterDays: Int = 30       // Show files older than N days
+    @Published var filterSizeMB: Int = 10   // Show files larger than N MB
+    @Published var filterMode: FilterMode = .all
 
     // MARK: - Filter Options
     enum FilterMode: String, CaseIterable {
+        case all = "All Files"
         case olderThan = "Older Than"
         case largerThan = "Larger Than"
-        case all = "All Files"
     }
+
+    // MARK: - Size Options
+    let sizeOptions: [(label: String, mb: Int)] = [
+        ("1 MB", 1),
+        ("10 MB", 10),
+        ("100 MB", 100),
+        ("500 MB", 500),
+        ("1 GB", 1024),
+    ]
 
     // MARK: - Computed Properties
 
@@ -44,7 +54,7 @@ final class DownloadsViewModel: ObservableObject {
                 return days >= filterDays
             }
         case .largerThan:
-            let threshold = Int64(filterDays) * 1_000_000  // filterDays used as MB
+            let threshold = Int64(filterSizeMB) * 1_000_000  // MB to bytes
             result = result.filter { $0.sizeInBytes >= threshold }
         case .all:
             break  // No filter

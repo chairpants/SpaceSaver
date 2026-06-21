@@ -20,8 +20,7 @@ struct CacheCleanerView: View {
 
             // Category cards
             if viewModel.categories.isEmpty {
-                ProgressView("Scanning caches…")
-                    .controlSize(.large)
+                ScanningEmptyState(message: "Scanning caches…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 categoryList
