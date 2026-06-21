@@ -35,18 +35,36 @@ final class LoginItemsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Load Login Items
-    /// Loads the list of login items.
-    /// Uses SMAppService (macOS 13+) which gives us access to
-    /// login items registered through the ServiceManagement framework.
+    /// Loads the list of login items with cache support.
     func loadLoginItems() async {
+        // Check cache first
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.loginItems) {
+            loginItems = decodeLoginItems(from: cached)
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.loginItems)
+
+            // Refresh in background if cache is older than 2 minutes
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.loginItems), age > 120 {
+                await refreshInBackground()
+            }
+            return
+        }
+
+        // No cache - do full load
+        await performFullLoad()
+    }
+
+    /// Performs a full load and updates cache
+    private func performFullLoad() async {
         isLoading = true
         errorMessage = nil
 
         var items: [LoginItem] = []
 
         // Get login items from the ServiceManagement framework
-        // SMAppService gives us services registered by apps
         let serviceTypes: [(SMAppService, LoginItem.Kind)] = [
             (SMAppService.mainApp, .app),
         ]
@@ -72,7 +90,56 @@ final class LoginItemsViewModel: ObservableObject {
         items.append(contentsOf: loadSystemLoginItems())
 
         loginItems = items
+
+        // Store in cache
+        let cachedResults = encodeLoginItems(items)
+        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.loginItems, ttl: .medium)
+        cacheAge = nil
+
         isLoading = false
+    }
+
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        var items: [LoginItem] = []
+        items.append(contentsOf: loadLaunchAgents())
+
+        let cachedResults = encodeLoginItems(items)
+        if ScanCache.shared.hasChanged(cachedResults, for: ScanCache.Keys.loginItems) {
+            loginItems = items
+            ScanCache.shared.set(cachedResults, for: ScanCache.Keys.loginItems, ttl: .medium)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh load
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.loginItems)
+        await performFullLoad()
+    }
+
+    // MARK: - Cache Encoding/Decoding
+    private func encodeLoginItems(_ items: [LoginItem]) -> [ScanResult] {
+        return items.map { item in
+            ScanResult(
+                url: item.url ?? URL(fileURLWithPath: "/tmp/loginitem"),
+                fileName: item.name,
+                sizeInBytes: item.isEnabled ? 1 : 0, // Use size as flag
+                lastAccessedDate: Date()
+            )
+        }
+    }
+
+    private func decodeLoginItems(from results: [ScanResult]) -> [LoginItem] {
+        return results.map { result in
+            LoginItem(
+                name: result.fileName,
+                bundleIdentifier: result.fileName,
+                url: result.url,
+                kind: .launchAgent,
+                isEnabled: result.sizeInBytes > 0
+            )
+        }
     }
 
     // MARK: - Toggle Login Item

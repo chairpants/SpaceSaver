@@ -35,6 +35,14 @@ struct TrashManagerView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
 
+                // Cache age indicator
+                if let age = viewModel.cacheAge {
+                    Label(age, systemImage: "clock.arrow.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                }
+
                 // Empty Trash button
                 Button(role: .destructive) {
                     viewModel.showConfirmation = true
@@ -54,6 +62,15 @@ struct TrashManagerView: View {
                 Label("Open Trash in Finder", systemImage: "folder")
             }
             .buttonStyle(.bordered)
+
+            // Refresh button
+            Button {
+                Task { await viewModel.forceRefresh() }
+            } label: {
+                Label(viewModel.isLoading ? "Refreshing…" : "Refresh", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.bordered)
+            .disabled(viewModel.isLoading)
 
             Spacer()
         }

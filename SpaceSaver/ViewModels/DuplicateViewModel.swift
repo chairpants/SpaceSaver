@@ -48,16 +48,36 @@ final class DuplicateViewModel: ObservableObject {
     // MARK: - Dependencies
     private let scanner = FileScanner()
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Actions
 
-    /// Starts scanning for duplicate files
+    /// Starts scanning with cache support
     func scan() async {
+        // Check cache first
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.duplicates) {
+            duplicateGroups = cached
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.duplicates)
+
+            // Refresh in background if cache is older than 5 minutes (duplicates are expensive)
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.duplicates), age > 300 {
+                await refreshInBackground()
+            }
+            return
+        }
+
+        // No cache - do full scan
+        await performFullScan()
+    }
+
+    /// Performs a full scan and updates cache
+    private func performFullScan() async {
         isScanning = true
         scanProgress = 0
         errorMessage = nil
-        duplicateGroups = []
 
-        duplicateGroups = await scanner.scanDuplicates(
+        let groups = await scanner.scanDuplicates(
             in: scanDirectory
         ) { progress in
             Task { @MainActor in
@@ -65,8 +85,34 @@ final class DuplicateViewModel: ObservableObject {
             }
         }
 
+        duplicateGroups = groups
+        ScanCache.shared.set(groups, for: ScanCache.Keys.duplicates, ttl: .long)
+        cacheAge = nil
+
         isScanning = false
         scanProgress = 1.0
+    }
+
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        let groups = await scanner.scanDuplicates(
+            in: scanDirectory
+        ) { _ in
+            // No progress updates for background refresh
+        }
+
+        // Only update if data changed
+        if ScanCache.shared.hasChanged(groups, for: ScanCache.Keys.duplicates) {
+            duplicateGroups = groups
+            ScanCache.shared.set(groups, for: ScanCache.Keys.duplicates, ttl: .long)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh scan (user pulled to refresh)
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.duplicates)
+        await performFullScan()
     }
 
     /// Toggles selection of a file within a duplicate group.
@@ -107,5 +153,8 @@ final class DuplicateViewModel: ObservableObject {
         }
 
         isDeleting = false
+
+        // Update cache with modified results
+        ScanCache.shared.set(duplicateGroups, for: ScanCache.Keys.duplicates, ttl: .long)
     }
 }

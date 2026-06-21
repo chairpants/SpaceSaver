@@ -54,13 +54,21 @@ struct CacheCleanerView: View {
     private var toolbar: some View {
         HStack(spacing: 12) {
             Button {
-                Task { await viewModel.scan() }
+                Task { await viewModel.forceRefresh() }
             } label: {
-                Label(viewModel.isScanning ? "Scanning…" : "Rescan", systemImage: "arrow.clockwise")
+                Label(viewModel.isScanning ? "Scanning…" : "Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(viewModel.isScanning)
 
             Spacer()
+
+            // Cache age indicator
+            if let age = viewModel.cacheAge {
+                Label(age, systemImage: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("Results from cache. Refresh to update.")
+            }
 
             if !viewModel.categories.isEmpty {
                 Button("Select All") { viewModel.selectAll() }

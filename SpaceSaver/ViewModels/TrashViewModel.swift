@@ -31,52 +31,100 @@ final class TrashViewModel: ObservableObject {
         FileSizeFormatter.string(fromBytes: trashSize)
     }
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Refresh Trash Info
-    /// Queries the size and contents of the Trash folder.
+    /// Queries the size and contents of the Trash folder with cache support
     func refresh() async {
+        // Check cache first - store as simple struct
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.trash) {
+            // Extract size and count from cached data
+            if cached.count >= 2 {
+                trashSize = cached[0].sizeInBytes
+                trashItemCount = Int(cached[0].lastAccessedDate.timeIntervalSince1970) // Hack: using date to store count
+                cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.trash)
+
+                // Refresh in background if cache is older than 1 minute (trash changes often)
+                if let age = ScanCache.shared.age(for: ScanCache.Keys.trash), age > 60 {
+                    await refreshInBackground()
+                }
+                return
+            }
+        }
+
+        // No cache - do full refresh
+        await performFullRefresh()
+    }
+
+    /// Performs a full refresh and updates cache
+    private func performFullRefresh() async {
         isLoading = true
         errorMessage = nil
 
-        // The macOS Trash is at ~/.Trash
+        let (size, count) = await calculateTrashStats()
+        trashSize = size
+        trashItemCount = count
+
+        // Store in cache using ScanResult as carrier (hack but works)
+        let cachedResults = [ScanResult(
+            url: URL(fileURLWithPath: "/tmp/trash"),
+            fileName: "trash",
+            sizeInBytes: size,
+            lastAccessedDate: Date(timeIntervalSince1970: Double(count))
+        )]
+        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.trash, ttl: .short)
+        cacheAge = nil
+
+        isLoading = false
+    }
+
+    /// Calculates trash size and count
+    private func calculateTrashStats() async -> (size: Int64, count: Int) {
         let trashURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".Trash")
-
         let fileManager = FileManager.default
 
-        // Check if we can access the Trash
         guard fileManager.fileExists(atPath: trashURL.path) else {
-            // Trash doesn't exist (shouldn't happen, but handle it)
-            trashSize = 0
-            trashItemCount = 0
-            isLoading = false
-            return
+            return (0, 0)
         }
 
         do {
-            // Try to list contents
-            let contents = try fileManager.contentsOfDirectory(
-                at: trashURL,
-                includingPropertiesForKeys: nil
-            )
-
-            // Count all top-level items
-            trashItemCount = contents.count
-
-            // Calculate size by measuring each item
+            let contents = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil)
             var totalSize: Int64 = 0
             for url in contents {
                 totalSize += await measureItemSize(at: url)
             }
-            trashSize = totalSize
-
+            return (totalSize, contents.count)
         } catch {
-            // Permission denied or other error
-            errorMessage = "Cannot access Trash: \(error.localizedDescription)\n\nMake sure SpaceSaver has Full Disk Access in System Settings → Privacy & Security → Full Disk Access"
-            trashSize = 0
-            trashItemCount = 0
+            errorMessage = "Cannot access Trash: \(error.localizedDescription)"
+            return (0, 0)
         }
+    }
 
-        isLoading = false
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        let (size, count) = await calculateTrashStats()
+
+        // Only update if changed
+        if trashSize != size || trashItemCount != count {
+            trashSize = size
+            trashItemCount = count
+            let cachedResults = [ScanResult(
+                url: URL(fileURLWithPath: "/tmp/trash"),
+                fileName: "trash",
+                sizeInBytes: size,
+                lastAccessedDate: Date(timeIntervalSince1970: Double(count))
+            )]
+            ScanCache.shared.set(cachedResults, for: ScanCache.Keys.trash, ttl: .short)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh refresh
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.trash)
+        await performFullRefresh()
     }
 
     /// Measures the size of a file or directory
@@ -135,7 +183,8 @@ final class TrashViewModel: ObservableObject {
 
         isEmptying = false
 
-        // Refresh to show updated size
+        // Clear cache and refresh
+        ScanCache.shared.invalidate(ScanCache.Keys.trash)
         await refresh()
     }
 

@@ -21,8 +21,16 @@ struct LoginItemsView: View {
 
                 Spacer()
 
+                // Cache age indicator
+                if let age = viewModel.cacheAge {
+                    Label(age, systemImage: "clock.arrow.circlepath")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .help("Results from cache. Refresh to update.")
+                }
+
                 Button {
-                    Task { await viewModel.loadLoginItems() }
+                    Task { await viewModel.forceRefresh() }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
