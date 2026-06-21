@@ -90,8 +90,10 @@ View and control what launches at startup — LaunchAgents and Login Items.
 Want to hack on it? Build it yourself:
 
 ### Requirements
-- macOS 13.0+ (Ventura)
-- Xcode 15+ (built with Xcode 26)
+
+- **macOS 13.0+ (Ventura)** or later
+- **Apple Silicon (M1/M2/M3/M4)** or **Intel** Macs — Universal Binary supports both
+- **Xcode 15+** to build (developed with Xcode 26)
 
 ### Clone & Build
 
