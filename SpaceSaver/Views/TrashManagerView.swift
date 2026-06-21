@@ -76,6 +76,9 @@ struct TrashManagerView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .onAppear {
+            Task { await viewModel.refresh() }
+        }
         .overlay {
             if viewModel.isEmptying {
                 ProgressView("Emptying Trash…")
