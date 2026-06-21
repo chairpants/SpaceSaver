@@ -41,6 +41,18 @@
 
 > ⚠️ **Note:** Full Disk Access is required to scan `~/Library`, system caches, and other protected locations.
 
+### 🍺 Homebrew Install
+
+```bash
+brew tap yourusername/spacesaver
+brew install --cask spacesaver
+```
+
+Or install directly:
+```bash
+brew install --cask https://raw.githubusercontent.com/yourusername/homebrew-spacesaver/main/Casks/spacesaver.rb
+```
+
 ---
 
 ## ✨ Features
