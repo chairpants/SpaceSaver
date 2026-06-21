@@ -90,22 +90,71 @@ final class DownloadsViewModel: ObservableObject {
     // MARK: - Dependencies
     private let scanner = FileScanner()
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Actions
 
-    /// Scans the Downloads folder
+    /// Scans the Downloads folder with cache support
     func scan() async {
+        // Check cache first
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.downloads) {
+            files = cached
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.downloads)
+
+            // Refresh in background if cache is older than 2 minutes
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.downloads), age > 120 {
+                await refreshInBackground()
+            }
+            return
+        }
+
+        // No cache - do full scan
+        await performFullScan()
+    }
+
+    /// Performs a full scan and updates cache
+    private func performFullScan() async {
         isScanning = true
         errorMessage = nil
 
         let downloadsURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Downloads")
 
-        files = await scanner.scanLargeFiles(
+        let results = await scanner.scanLargeFiles(
             in: downloadsURL,
             minimumSize: 0  // Include all sizes
         )
 
+        files = results
+        ScanCache.shared.set(results, for: ScanCache.Keys.downloads, ttl: .medium)
+        cacheAge = nil
+
         isScanning = false
+    }
+
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        let downloadsURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Downloads")
+
+        let results = await scanner.scanLargeFiles(
+            in: downloadsURL,
+            minimumSize: 0
+        )
+
+        // Only update if data changed
+        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.downloads) {
+            files = results
+            ScanCache.shared.set(results, for: ScanCache.Keys.downloads, ttl: .medium)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh scan (user pulled to refresh)
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.downloads)
+        await performFullScan()
     }
 
     /// Toggles selection of a file
@@ -148,6 +197,9 @@ final class DownloadsViewModel: ObservableObject {
         // Remove deleted files from the list
         files.removeAll { $0.isSelected }
         isDeleting = false
+
+        // Update cache with modified results
+        ScanCache.shared.set(files, for: ScanCache.Keys.downloads, ttl: .medium)
     }
 
     /// Opens a file in Finder

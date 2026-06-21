@@ -93,13 +93,21 @@ struct DownloadsCleanerView: View {
                 .fixedSize()
             }
 
-            // Scan button
+            // Refresh button
             Button {
-                Task { await viewModel.scan() }
+                Task { await viewModel.forceRefresh() }
             } label: {
-                Label(viewModel.isScanning ? "Scanning…" : "Scan", systemImage: "arrow.clockwise")
+                Label(viewModel.isScanning ? "Scanning…" : "Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(viewModel.isScanning)
+
+            // Cache age indicator
+            if let age = viewModel.cacheAge {
+                Label(age, systemImage: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("Results from cache. Refresh to update.")
+            }
 
             Spacer()
 

@@ -49,10 +49,31 @@ final class CacheCleanerViewModel: ObservableObject {
     // MARK: - Dependencies
     private let cacheLocator = CacheLocator.shared
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Actions
 
     /// Scans all cache categories and calculates their sizes
     func scan() async {
+        // Check cache first
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.cacheCleaner) {
+            categories = cached
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.cacheCleaner)
+
+            // Refresh in background if cache is older than 1 minute (cache sizes change often)
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.cacheCleaner), age > 60 {
+                await refreshInBackground()
+            }
+            return
+        }
+
+        // No cache - do full scan
+        await performFullScan()
+    }
+
+    /// Performs a full scan and updates cache
+    private func performFullScan() async {
         isScanning = true
         errorMessage = nil
 
@@ -69,7 +90,36 @@ final class CacheCleanerViewModel: ObservableObject {
             }
         }
 
+        ScanCache.shared.set(categories, for: ScanCache.Keys.cacheCleaner, ttl: .short)
+        cacheAge = nil
+
         isScanning = false
+    }
+
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        let measured = await cacheLocator.measureAllCategories()
+
+        // Create new categories array with updated sizes
+        var updatedCategories = CacheCategory.builtInCategories
+        for index in updatedCategories.indices {
+            if let measuredCategory = measured.first(where: { $0.name == updatedCategories[index].name }) {
+                updatedCategories[index].calculatedSize = measuredCategory.calculatedSize
+            }
+        }
+
+        // Only update if data changed
+        if ScanCache.shared.hasChanged(updatedCategories, for: ScanCache.Keys.cacheCleaner) {
+            categories = updatedCategories
+            ScanCache.shared.set(categories, for: ScanCache.Keys.cacheCleaner, ttl: .short)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh scan (user pulled to refresh)
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.cacheCleaner)
+        await performFullScan()
     }
 
     /// Toggles selection of a category

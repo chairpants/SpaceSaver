@@ -50,13 +50,21 @@ struct DuplicateFinderView: View {
     private var toolbar: some View {
         HStack(spacing: 12) {
             Button {
-                Task { await viewModel.scan() }
+                Task { await viewModel.forceRefresh() }
             } label: {
-                Label(viewModel.isScanning ? "Scanning…" : "Scan", systemImage: "magnifyingglass")
+                Label(viewModel.isScanning ? "Scanning…" : "Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(viewModel.isScanning)
 
             Spacer()
+
+            // Cache age indicator
+            if let age = viewModel.cacheAge {
+                Label(age, systemImage: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("Results from cache. Refresh to update.")
+            }
 
             if !viewModel.duplicateGroups.isEmpty {
                 Text("\(viewModel.groupCount) groups • \(viewModel.formattedWastedSpace) wasted")
