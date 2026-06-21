@@ -40,14 +40,12 @@ final class TrashViewModel: ObservableObject {
         let trashURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".Trash")
 
-        let path = trashURL.path
-
         // Check if Trash exists and list its contents
         let fileManager = FileManager.default
 
         guard let contents = try? fileManager.contentsOfDirectory(
             at: trashURL,
-            includingPropertiesForKeys: [.fileSizeKey, .totalFileSizeKey, .isDirectoryKey]
+            includingPropertiesForKeys: [.fileSizeKey, .totalFileSizeKey]
         ) else {
             trashSize = 0
             trashItemCount = 0
@@ -55,28 +53,12 @@ final class TrashViewModel: ObservableObject {
             return
         }
 
-        var totalSize: Int64 = 0
-        var count = 0
+        // Count all top-level items (files AND folders)
+        trashItemCount = contents.count
 
-        for url in contents {
-            do {
-                let values = try url.resourceValues(
-                    forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey]
-                )
-                if values.isDirectory != true {
-                    totalSize += Int64(values.totalFileSize ?? values.fileSize ?? 0)
-                    count += 1
-                }
-            } catch {
-                continue
-            }
-        }
+        // Measure total size recursively
+        trashSize = await DiskUsage.shared.measureDirectorySize(at: trashURL.path)
 
-        // Also measure directories in Trash recursively
-        totalSize += await DiskUsage.shared.measureDirectorySize(at: path)
-
-        trashSize = totalSize
-        trashItemCount = count
         isLoading = false
     }
 
