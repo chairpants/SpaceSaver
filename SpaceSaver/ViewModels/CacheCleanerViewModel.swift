@@ -57,7 +57,7 @@ final class CacheCleanerViewModel: ObservableObject {
     /// Scans all cache categories and calculates their sizes
     func scan() async {
         // Check cache first
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.cacheCleaner) {
+        if let cached: [CacheCategory] = ScanCache.shared.get(for: ScanCache.Keys.cacheCleaner, as: [CacheCategory].self) {
             categories = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.cacheCleaner)
 
@@ -109,7 +109,7 @@ final class CacheCleanerViewModel: ObservableObject {
         }
 
         // Only update if data changed
-        if ScanCache.shared.hasChanged(updatedCategories, for: ScanCache.Keys.cacheCleaner) {
+        if ScanCache.shared.hasChanged(updatedCategories, for: ScanCache.Keys.cacheCleaner, as: [CacheCategory].self) {
             categories = updatedCategories
             ScanCache.shared.set(categories, for: ScanCache.Keys.cacheCleaner, ttl: .short)
             cacheAge = nil

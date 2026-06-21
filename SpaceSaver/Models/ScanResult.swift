@@ -12,7 +12,7 @@ import Foundation
 // MARK: - ScanResult
 // Represents a single file found during a scan.
 // Conforms to Identifiable for use in SwiftUI Lists and Tables.
-struct ScanResult: Identifiable {
+struct ScanResult: Identifiable, Codable {
     let id = UUID()
 
     /// Full file path on disk
@@ -73,7 +73,7 @@ struct ScanResult: Identifiable {
 // MARK: - DuplicateGroup
 // A set of files that have identical content (determined by file size + hash).
 // The user picks which files to keep; the rest are deleted.
-struct DuplicateGroup: Identifiable {
+struct DuplicateGroup: Identifiable, Codable {
     let id = UUID()
 
     /// A hash that identifies this duplicate set (same for all files in the group)

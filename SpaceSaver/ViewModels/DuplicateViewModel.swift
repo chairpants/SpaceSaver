@@ -56,7 +56,7 @@ final class DuplicateViewModel: ObservableObject {
     /// Starts scanning with cache support
     func scan() async {
         // Check cache first
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.duplicates) {
+        if let cached: [DuplicateGroup] = ScanCache.shared.get(for: ScanCache.Keys.duplicates, as: [DuplicateGroup].self) {
             duplicateGroups = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.duplicates)
 
@@ -102,7 +102,7 @@ final class DuplicateViewModel: ObservableObject {
         }
 
         // Only update if data changed
-        if ScanCache.shared.hasChanged(groups, for: ScanCache.Keys.duplicates) {
+        if ScanCache.shared.hasChanged(groups, for: ScanCache.Keys.duplicates, as: [DuplicateGroup].self) {
             duplicateGroups = groups
             ScanCache.shared.set(groups, for: ScanCache.Keys.duplicates, ttl: .long)
             cacheAge = nil

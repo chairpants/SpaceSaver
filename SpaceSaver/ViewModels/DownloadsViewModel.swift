@@ -98,7 +98,7 @@ final class DownloadsViewModel: ObservableObject {
     /// Scans the Downloads folder with cache support
     func scan() async {
         // Check cache first
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.downloads) {
+        if let cached: [ScanResult] = ScanCache.shared.get(for: ScanCache.Keys.downloads, as: [ScanResult].self) {
             files = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.downloads)
 
@@ -144,7 +144,7 @@ final class DownloadsViewModel: ObservableObject {
         )
 
         // Only update if data changed
-        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.downloads) {
+        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.downloads, as: [ScanResult].self) {
             files = results
             ScanCache.shared.set(results, for: ScanCache.Keys.downloads, ttl: .medium)
             cacheAge = nil

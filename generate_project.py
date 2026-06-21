@@ -57,6 +57,7 @@ SOURCE_GROUPS = {
         "CacheLocator.swift",
         "Color+SpaceSaver.swift",
         "Spacing.swift",
+        "ScanCache.swift",
     ],
 }
 
