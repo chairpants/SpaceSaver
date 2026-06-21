@@ -161,7 +161,9 @@ final class DiskUsage {
                 return 0
             }
 
-            for case let url as URL in enumerator {
+            // Convert to array to avoid Swift 6 async iterator issues
+            let urls = enumerator.allObjects.compactMap { $0 as? URL }
+            for url in urls {
                 guard let resourceValues = try? url.resourceValues(
                     forKeys: [.fileSizeKey, .isDirectoryKey]
                 ) else { continue }

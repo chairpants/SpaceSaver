@@ -69,23 +69,23 @@ struct ContentCard<Content: View>: View {
 // MARK: - Preview
 #Preview {
     VStack(spacing: Spacing.large) {
-        CardContainer(isElevated: true) {
+        CardContainer(isElevated: true, content: {
             Text("This is the card content")
                 .font(.body)
-        } label: {
+        }, label: {
             Label("Elevated Card", systemImage: "star.fill")
-        }
+        })
 
-        CardContainer {
+        CardContainer(content: {
             Text("Regular card content")
                 .font(.body)
-        } label: {
+        }, label: {
             Label("Regular Card", systemImage: "doc")
-        }
+        })
 
-        ContentCard(isElevated: true) {
+        ContentCard(isElevated: true, content: {
             Text("Content only card with elevation")
-        }
+        })
     }
     .padding()
     .frame(width: 400)
