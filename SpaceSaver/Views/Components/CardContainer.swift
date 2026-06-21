@@ -83,9 +83,9 @@ struct ContentCard<Content: View>: View {
             Label("Regular Card", systemImage: "doc")
         })
 
-        ContentCard(isElevated: true, content: {
+        ContentCard(content: {
             Text("Content only card with elevation")
-        })
+        }, isElevated: true)
     }
     .padding()
     .frame(width: 400)
