@@ -71,15 +71,23 @@ struct LargeFilesView: View {
             .pickerStyle(.menu)
             .fixedSize()
 
-            // Scan button
+            // Scan / Refresh button
             Button {
-                Task { await viewModel.scan() }
+                Task { await viewModel.forceRefresh() }
             } label: {
-                Label(viewModel.isScanning ? "Scanning…" : "Scan", systemImage: "magnifyingglass")
+                Label(viewModel.isScanning ? "Scanning…" : "Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(viewModel.isScanning)
 
             Spacer()
+
+            // Cache age indicator
+            if let age = viewModel.cacheAge {
+                Label(age, systemImage: "clock.arrow.circlepath")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .help("Results from cache. Refresh to update.")
+            }
 
             // Selection actions
             if !viewModel.scanResults.isEmpty {

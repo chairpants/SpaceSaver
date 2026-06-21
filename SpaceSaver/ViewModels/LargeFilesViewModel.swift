@@ -60,17 +60,39 @@ final class LargeFilesViewModel: ObservableObject {
     // MARK: - Dependencies
     private let scanner = FileScanner()
 
+    // MARK: - Cache
+    @Published var cacheAge: String? = nil
+
     // MARK: - Actions
 
-    /// Starts scanning the home directory for large files
+    /// Starts scanning with cache support
+    /// Shows cached results immediately, refreshes in background
     func scan() async {
+        // Check cache first
+        if let cached = ScanCache.shared.get(for: ScanCache.Keys.largeFiles) {
+            scanResults = cached
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.largeFiles)
+
+            // Refresh in background if cache is older than 2 minutes
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.largeFiles), age > 120 {
+                await refreshInBackground()
+            }
+            return
+        }
+
+        // No cache - do full scan
+        await performFullScan()
+    }
+
+    /// Performs a full scan and updates cache
+    private func performFullScan() async {
         isScanning = true
         scanProgress = 0
         errorMessage = nil
 
         let homeDir = FileManager.default.homeDirectoryForCurrentUser
 
-        scanResults = await scanner.scanLargeFiles(
+        let results = await scanner.scanLargeFiles(
             in: homeDir,
             minimumSize: minimumSize
         ) { progress in
@@ -79,8 +101,37 @@ final class LargeFilesViewModel: ObservableObject {
             }
         }
 
+        scanResults = results
+        ScanCache.shared.set(results, for: ScanCache.Keys.largeFiles, ttl: .medium)
+        cacheAge = nil
+
         isScanning = false
         scanProgress = 1.0
+    }
+
+    /// Refreshes data in background without showing loading state
+    private func refreshInBackground() async {
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+
+        let results = await scanner.scanLargeFiles(
+            in: homeDir,
+            minimumSize: minimumSize
+        ) { _ in
+            // No progress updates for background refresh
+        }
+
+        // Only update if data changed
+        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.largeFiles) {
+            scanResults = results
+            ScanCache.shared.set(results, for: ScanCache.Keys.largeFiles, ttl: .medium)
+            cacheAge = nil
+        }
+    }
+
+    /// Forces a fresh scan (user pulled to refresh)
+    func forceRefresh() async {
+        ScanCache.shared.invalidate(ScanCache.Keys.largeFiles)
+        await performFullScan()
     }
 
     /// Toggles selection of a file
@@ -124,6 +175,9 @@ final class LargeFilesViewModel: ObservableObject {
         // Remove deleted files from the list
         scanResults.removeAll { $0.isSelected }
         isDeleting = false
+
+        // Update cache with modified results
+        ScanCache.shared.set(scanResults, for: ScanCache.Keys.largeFiles, ttl: .medium)
     }
 
     /// Opens the file's location in Finder
