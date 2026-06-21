@@ -365,6 +365,8 @@ def main():
 
     project_release_settings = {
         "ALWAYS_SEARCH_USER_PATHS": "NO",
+        "ARCHS": ["arm64", "x86_64"],
+        "ONLY_ACTIVE_ARCH": "NO",
         "CLANG_ANALYZER_NONNULL": "YES",
         "CLANG_CXX_LANGUAGE_STANDARD": "\"gnu++20\"",
         "CLANG_ENABLE_MODULES": "YES",
