@@ -23,17 +23,31 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    // SF Symbol icon for each section — gives the sidebar a polished look.
+    /// SF Symbol icon with filled variant for better visibility
     var systemImage: String {
         switch self {
-        case .dashboard:       return "chart.pie"
-        case .largeFiles:      return "doc.fill"
-        case .duplicateFinder: return "doc.on.doc"
-        case .cacheCleaner:    return "internaldrive"
-        case .trashManager:    return "trash"
-        case .downloadsCleaner:return "arrow.down.circle"
-        case .appUninstaller:  return "app.dashed"
-        case .loginItems:      return "lock.desktopcomputer"
+        case .dashboard:        return "chart.pie.fill"
+        case .largeFiles:       return "doc.text.fill"
+        case .duplicateFinder:  return "doc.on.doc.fill"
+        case .cacheCleaner:     return "internaldrive.fill"
+        case .trashManager:     return "trash.fill"
+        case .downloadsCleaner: return "arrow.down.circle.fill"
+        case .appUninstaller:   return "app.fill"
+        case .loginItems:       return "lock.desktopcomputer"
+        }
+    }
+
+    /// Accent color for each section - helps users mentally map sections
+    var accentColor: Color {
+        switch self {
+        case .dashboard:        return .cyan
+        case .largeFiles:       return .blue
+        case .duplicateFinder:  return .orange
+        case .cacheCleaner:     return .teal
+        case .trashManager:     return .red
+        case .downloadsCleaner: return .indigo
+        case .appUninstaller:   return .purple
+        case .loginItems:       return .green
         }
     }
 }
@@ -63,11 +77,17 @@ struct ContentView: View {
     }
 
     // MARK: - Sidebar View
-    // Lists all sections with icons. Grouped into "Overview" and "Clean Up".
+    // Lists all sections with icons using hierarchical rendering for depth.
     private var sidebar: some View {
         List(SidebarItem.allCases, selection: $selectedSection) { item in
-            Label(item.rawValue, systemImage: item.systemImage)
-                .tag(item)
+            Label {
+                Text(item.rawValue)
+            } icon: {
+                Image(systemName: item.systemImage)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(item.accentColor)
+            }
+            .tag(item)
         }
         .navigationTitle("SpaceSaver")
         .listStyle(.sidebar)
@@ -103,3 +123,7 @@ struct ContentView: View {
     }
 }
 
+// MARK: - Preview
+#Preview {
+    ContentView()
+}

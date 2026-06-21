@@ -58,22 +58,34 @@ struct DownloadsCleanerView: View {
                     Text(mode.rawValue).tag(mode)
                 }
             }
-            .frame(width: 140)
+            .pickerStyle(.menu)
+            .fixedSize()
 
-            // Days/size threshold
+            // Days threshold
             if viewModel.filterMode == .olderThan {
-                Picker("Older Than", selection: $viewModel.filterDays) {
+                Picker("", selection: $viewModel.filterDays) {
                     Text("30 days").tag(30)
                     Text("60 days").tag(60)
                     Text("90 days").tag(90)
                     Text("180 days").tag(180)
                     Text("365 days").tag(365)
                 }
-                .frame(width: 100)
+                .pickerStyle(.menu)
+                .fixedSize()
             }
 
-            // Sorting is now done by clicking table column headers.
+            // Size threshold
+            if viewModel.filterMode == .largerThan {
+                Picker("", selection: $viewModel.filterSizeMB) {
+                    ForEach(viewModel.sizeOptions, id: \.mb) { option in
+                        Text(option.label).tag(option.mb)
+                    }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+            }
 
+            // Scan button
             Button {
                 Task { await viewModel.scan() }
             } label: {
@@ -164,31 +176,32 @@ struct DownloadsCleanerView: View {
     }
 
     // MARK: - Empty State
+    @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            if viewModel.isScanning {
-                ProgressView("Scanning Downloads…")
-                    .controlSize(.large)
-            } else {
-                Image(systemName: "arrow.down.circle")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
+        if viewModel.isScanning {
+            ScanningEmptyState(message: "Scanning Downloads…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            // Show different message if files exist but filters hide them
+            let hasFilesButFiltered = !viewModel.files.isEmpty && viewModel.filterMode != .all
 
-                Text("No Matching Downloads")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-
-                Text("Try adjusting the filter to see more files.")
-                    .foregroundStyle(.secondary)
-
-                Button("Scan Again") {
-                    Task { await viewModel.scan() }
-                }
-                .buttonStyle(.borderedProminent)
-            }
+            EmptyStateView(
+                icon: hasFilesButFiltered ? "line.3.horizontal.decrease.circle" : "arrow.down.circle",
+                title: hasFilesButFiltered ? "Filters Are Hiding Files" : "No Downloads Found",
+                description: hasFilesButFiltered
+                    ? "You have \(viewModel.files.count) files in Downloads, but the current filter isn't showing them. Try clearing the filter or adjusting it."
+                    : "Your Downloads folder appears to be empty. Files you download will appear here.",
+                action: {
+                    if hasFilesButFiltered {
+                        viewModel.filterMode = .all
+                    } else {
+                        Task { await viewModel.scan() }
+                    }
+                },
+                actionLabel: hasFilesButFiltered ? "Show All Files" : "Scan Again"
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(40)
     }
 }
 

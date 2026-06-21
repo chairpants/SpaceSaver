@@ -133,40 +133,23 @@ struct DuplicateFinderView: View {
     }
 
     // MARK: - Empty State
+    @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            if viewModel.isScanning {
-                VStack(spacing: 12) {
-                    ProgressView(value: viewModel.scanProgress) {
-                        Text("Scanning for duplicates…")
-                    }
-                    .frame(width: 300)
-
-                    Text("\(Int(viewModel.scanProgress * 100))%")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                }
-            } else {
-                Image(systemName: "doc.on.doc")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
-
-                Text("No Duplicates Found")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-
-                Text("Duplicate files (identical content) will appear here.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                Button("Scan for Duplicates") {
+        if viewModel.isScanning {
+            ScanningEmptyState(message: "Scanning for duplicates…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            EmptyStateView(
+                icon: "doc.on.doc",
+                title: "No Duplicates Found",
+                description: "Duplicate files (identical content) will appear here after scanning.",
+                action: {
                     Task { await viewModel.scan() }
-                }
-                .buttonStyle(.borderedProminent)
-            }
+                },
+                actionLabel: "Scan for Duplicates"
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(40)
     }
 }
 

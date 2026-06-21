@@ -47,11 +47,16 @@ SOURCE_GROUPS = {
         "FileSizeFormatter.swift",
         "ConfirmDeleteView.swift",
         "ProgressView+.swift",
+        "CardContainer.swift",
+        "AnimatedProgressRing.swift",
+        "EmptyStateView.swift",
     ],
     "Utilities": [
         "DiskUsage.swift",
         "FileScanner.swift",
         "CacheLocator.swift",
+        "Color+SpaceSaver.swift",
+        "Spacing.swift",
     ],
 }
 

@@ -60,7 +60,8 @@ struct LargeFilesView: View {
                     Text(option.label).tag(option.bytes)
                 }
             }
-            .frame(width: 120)
+            .pickerStyle(.menu)
+            .fixedSize()
 
             // Scan button
             Button {
@@ -146,32 +147,27 @@ struct LargeFilesView: View {
 
     // MARK: - Empty State
     // Shown when no large files are found or before a scan.
+    @ViewBuilder
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            if viewModel.isScanning {
-                ProgressView("Scanning for large files…")
-                    .controlSize(.large)
-            } else {
-                Image(systemName: "doc")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.secondary)
-
-                Text("No Large Files Found")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-
-                Text("Files larger than \(FileSizeFormatter.string(fromBytes: viewModel.minimumSize)) will appear here after scanning.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                Button("Scan Again") {
+        if viewModel.isScanning {
+            ScanningEmptyState(message: "Scanning for large files…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            EmptyStateView(
+                icon: "doc.text.magnifyingglass",
+                title: "No Large Files Found",
+                description: "Files larger than \(FileSizeFormatter.string(fromBytes: viewModel.minimumSize)) will appear here after scanning.",
+                action: {
                     Task { await viewModel.scan() }
-                }
-                .buttonStyle(.borderedProminent)
-            }
+                },
+                actionLabel: "Scan Now"
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(40)
     }
 }
 
+// MARK: - Preview
+#Preview {
+    LargeFilesView()
+}

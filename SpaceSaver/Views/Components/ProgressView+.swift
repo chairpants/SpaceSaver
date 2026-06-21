@@ -49,6 +49,68 @@ extension View {
         }
     }
 
+    /// Premium glassmorphism scanning overlay with smooth animations.
+    /// - Parameters:
+    ///   - isScanning: Whether a scan is in progress
+    ///   - message: Text to show below the progress indicator
+    ///   - progress: Optional progress value (0 to 1). Nil = indeterminate.
+    func premiumScanningOverlay(
+        isScanning: Bool,
+        message: String = "Scanning…",
+        progress: Double? = nil
+    ) -> some View {
+        overlay {
+            if isScanning {
+                ZStack {
+                    // Semi-transparent background with animation
+                    Color.black.opacity(0.15)
+                        .ignoresSafeArea()
+
+                    // Glass card
+                    VStack(spacing: 20) {
+                        if let progress {
+                            VStack(spacing: 12) {
+                                ProgressView(value: progress)
+                                    .progressViewStyle(.linear)
+                                    .tint(.accentColor)
+                                    .frame(width: 240)
+
+                                HStack {
+                                    Text(message)
+                                        .font(.subheadline.weight(.medium))
+                                    Spacer()
+                                    Text("\(Int(progress * 100))%")
+                                        .font(.callout.monospacedDigit())
+                                }
+                                .frame(width: 240)
+                            }
+                        } else {
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(.accentColor)
+
+                            Text(message)
+                                .font(.subheadline.weight(.medium))
+                        }
+                    }
+                    .padding(32)
+                    .background(
+                        ZStack {
+                            // Multiple material layers for depth
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(Color.accentColor.opacity(0.05))
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+                        }
+                    )
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
+        }
+    }
+
     /// Shows an empty state when there are no results.
     /// - Parameters:
     ///   - isEmpty: Whether to show the empty state
@@ -67,29 +129,13 @@ extension View {
     ) -> some View {
         overlay {
             if isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: icon)
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
-
-                    Text(title)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-
-                    if let action {
-                        Button(actionLabel) {
-                            action()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top, 4)
-                    }
-                }
-                .padding(40)
+                EmptyStateView(
+                    icon: icon,
+                    title: title,
+                    description: description,
+                    action: action,
+                    actionLabel: actionLabel
+                )
             }
         }
     }
@@ -117,8 +163,22 @@ struct StatusRow: View {
 
             Text(value)
                 .fontWeight(.medium)
+                .monospacedDigit()
         }
         .font(.subheadline)
     }
 }
 
+// MARK: - Preview
+#Preview {
+    VStack(spacing: 20) {
+        StatusRow(
+            icon: "internaldrive.fill",
+            label: "Total Capacity",
+            value: "1 TB",
+            iconColor: .blue
+        )
+        .padding()
+        .frame(width: 300)
+    }
+}
