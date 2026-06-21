@@ -38,11 +38,27 @@ jobs:
         ditto -c -k --keepParent "$APP_PATH" SpaceSaver.app.zip
         ls -lh SpaceSaver.app.zip
 
+    - name: Get Release Notes
+      id: get_notes
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        NOTES_FILE="RELEASE_NOTES_${TAG_NAME}.md"
+
+        if [ -f "$NOTES_FILE" ]; then
+          echo "Using release notes from $NOTES_FILE"
+          echo "body_path=$NOTES_FILE" >> $GITHUB_OUTPUT
+          echo "generate_notes=false" >> $GITHUB_OUTPUT
+        else
+          echo "No release notes file found, generating automatically"
+          echo "generate_notes=true" >> $GITHUB_OUTPUT
+        fi
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: SpaceSaver.app.zip
-        body_path: RELEASE_NOTES_${{ github.ref_name }}.md
+        body_path: ${{ steps.get_notes.outputs.body_path }}
+        generate_release_notes: ${{ steps.get_notes.outputs.generate_notes }}
         draft: false
         prerelease: false
       env:
