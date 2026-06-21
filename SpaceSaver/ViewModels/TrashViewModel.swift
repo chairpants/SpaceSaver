@@ -35,31 +35,81 @@ final class TrashViewModel: ObservableObject {
     /// Queries the size and contents of the Trash folder.
     func refresh() async {
         isLoading = true
+        errorMessage = nil
 
         // The macOS Trash is at ~/.Trash
         let trashURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".Trash")
 
-        // Check if Trash exists and list its contents
         let fileManager = FileManager.default
 
-        guard let contents = try? fileManager.contentsOfDirectory(
-            at: trashURL,
-            includingPropertiesForKeys: [.fileSizeKey, .totalFileSizeKey]
-        ) else {
+        // Check if we can access the Trash
+        guard fileManager.fileExists(atPath: trashURL.path) else {
+            // Trash doesn't exist (shouldn't happen, but handle it)
             trashSize = 0
             trashItemCount = 0
             isLoading = false
             return
         }
 
-        // Count all top-level items (files AND folders)
-        trashItemCount = contents.count
+        do {
+            // Try to list contents
+            let contents = try fileManager.contentsOfDirectory(
+                at: trashURL,
+                includingPropertiesForKeys: nil
+            )
 
-        // Measure total size recursively
-        trashSize = await DiskUsage.shared.measureDirectorySize(at: trashURL.path)
+            // Count all top-level items
+            trashItemCount = contents.count
+
+            // Calculate size by measuring each item
+            var totalSize: Int64 = 0
+            for url in contents {
+                totalSize += await measureItemSize(at: url)
+            }
+            trashSize = totalSize
+
+        } catch {
+            // Permission denied or other error
+            errorMessage = "Cannot access Trash: \(error.localizedDescription)\n\nMake sure SpaceSaver has Full Disk Access in System Settings → Privacy & Security → Full Disk Access"
+            trashSize = 0
+            trashItemCount = 0
+        }
 
         isLoading = false
+    }
+
+    /// Measures the size of a file or directory
+    private func measureItemSize(at url: URL) async -> Int64 {
+        let fileManager = FileManager.default
+
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: url.path)
+            if let size = attributes[.size] as? Int64 {
+                return size
+            }
+        } catch {
+            // Fall through to directory calculation
+        }
+
+        // If it's a directory, calculate recursively
+        var totalSize: Int64 = 0
+        guard let enumerator = fileManager.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey]) else {
+            return 0
+        }
+
+        for case let fileURL as URL in enumerator {
+            do {
+                let attrs = try fileManager.attributesOfItem(atPath: fileURL.path)
+                if let size = attrs[.size] as? Int64 {
+                    totalSize += size
+                }
+            } catch {
+                continue
+            }
+        }
+
+        return totalSize
     }
 
     // MARK: - Empty Trash
