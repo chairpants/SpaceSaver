@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode — per-user state and build artifacts (never commit these)
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+
+# Build output and indexes
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+.build/
+
+# Fastlane / CocoaPods (not used, but ignored just in case)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+Pods/
+
+# Python (for generate_project.py caches)
+__pycache__/
+*.pyc
