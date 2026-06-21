@@ -47,6 +47,14 @@ struct DownloadsCleanerView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .alert("Delete Selected Files?", isPresented: $viewModel.showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Move to Trash", role: .destructive) {
+                Task { await viewModel.deleteSelected() }
+            }
+        } message: {
+            Text("This will move \(viewModel.selectedCount) files (\(viewModel.formattedSelectedSize)) to the Trash.")
+        }
     }
 
     // MARK: - Filter Bar

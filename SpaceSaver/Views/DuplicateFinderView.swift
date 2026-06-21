@@ -36,6 +36,14 @@ struct DuplicateFinderView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .alert("Delete Selected Files?", isPresented: $viewModel.showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Move to Trash", role: .destructive) {
+                Task { await viewModel.deleteSelected() }
+            }
+        } message: {
+            Text("This will move the selected files to the Trash.")
+        }
     }
 
     // MARK: - Toolbar
