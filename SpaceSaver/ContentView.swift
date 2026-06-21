@@ -78,6 +78,7 @@ struct ContentView: View {
 
     // MARK: - Sidebar View
     // Lists all sections with icons using hierarchical rendering for depth.
+    // Width is constrained to prevent it from extending past screen edge.
     private var sidebar: some View {
         List(SidebarItem.allCases, selection: $selectedSection) { item in
             Label {
@@ -91,6 +92,7 @@ struct ContentView: View {
         }
         .navigationTitle("SpaceSaver")
         .listStyle(.sidebar)
+        .navigationSplitViewColumnWidth(min: 150, ideal: 180, max: 250)
     }
 
     // MARK: - Detail View Router
