@@ -11,7 +11,7 @@ import Foundation
 // MARK: - CacheCategory
 // Represents a category of cache/temporary files that can be cleaned.
 // Examples: Xcode Derived Data, Safari Cache, System Logs, etc.
-struct CacheCategory: Identifiable {
+struct CacheCategory: Identifiable, Codable {
     let id = UUID()
 
     /// Display name (e.g., "Xcode Derived Data")

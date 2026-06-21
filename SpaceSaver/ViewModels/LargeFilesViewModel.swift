@@ -69,7 +69,7 @@ final class LargeFilesViewModel: ObservableObject {
     /// Shows cached results immediately, refreshes in background
     func scan() async {
         // Check cache first
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.largeFiles) {
+        if let cached: [ScanResult] = ScanCache.shared.get(for: ScanCache.Keys.largeFiles, as: [ScanResult].self) {
             scanResults = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.largeFiles)
 
@@ -121,7 +121,7 @@ final class LargeFilesViewModel: ObservableObject {
         }
 
         // Only update if data changed
-        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.largeFiles) {
+        if ScanCache.shared.hasChanged(results, for: ScanCache.Keys.largeFiles, as: [ScanResult].self) {
             scanResults = results
             ScanCache.shared.set(results, for: ScanCache.Keys.largeFiles, ttl: .medium)
             cacheAge = nil

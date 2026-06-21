@@ -8,17 +8,16 @@
 
 import Foundation
 
-/// Simple in-memory cache for scan results.
+/// Simple in-memory cache for any Codable type.
 /// Cleared on app launch. Background refresh with change detection.
 @MainActor
 final class ScanCache {
     static let shared = ScanCache()
 
-    private var cache: [String: CacheEntry] = [:]
-    private let queue = DispatchQueue(label: "com.spacesaver.cache", qos: .userInitiated)
+    private var cache: [String: AnyCacheEntry] = [:]
 
-    struct CacheEntry {
-        let results: [ScanResult]
+    struct AnyCacheEntry {
+        let data: Data
         let timestamp: Date
         let checksum: String
         let ttl: TimeInterval
@@ -50,7 +49,7 @@ final class ScanCache {
 
     // MARK: - Get
     /// Retrieves cached results if valid and not expired
-    func get(for key: String) -> [ScanResult]? {
+    func get<T: Codable>(for key: String, as type: T.Type) -> T? {
         guard let entry = cache[key] else { return nil }
 
         if entry.isExpired {
@@ -58,20 +57,30 @@ final class ScanCache {
             return nil
         }
 
-        return entry.results
+        do {
+            return try JSONDecoder().decode(type, from: entry.data)
+        } catch {
+            cache.removeValue(forKey: key)
+            return nil
+        }
     }
 
     // MARK: - Set
     /// Stores results in cache with TTL
-    func set(_ results: [ScanResult], for key: String, ttl: CacheTTL = .medium) {
-        let checksum = calculateChecksum(results)
-        let entry = CacheEntry(
-            results: results,
-            timestamp: Date(),
-            checksum: checksum,
-            ttl: ttl.interval
-        )
-        cache[key] = entry
+    func set<T: Codable>(_ value: T, for key: String, ttl: CacheTTL = .medium) {
+        do {
+            let data = try JSONEncoder().encode(value)
+            let checksum = calculateChecksum(data)
+            let entry = AnyCacheEntry(
+                data: data,
+                timestamp: Date(),
+                checksum: checksum,
+                ttl: ttl.interval
+            )
+            cache[key] = entry
+        } catch {
+            // Failed to encode, don't cache
+        }
     }
 
     // MARK: - Invalidate
@@ -87,20 +96,22 @@ final class ScanCache {
 
     // MARK: - Checksum
     /// Calculates checksum to detect if data changed
-    func calculateChecksum(_ results: [ScanResult]) -> String {
-        // Simple checksum: combine file count, total size, and recent modification
-        let count = results.count
-        let totalSize = results.reduce(0) { $0 + $1.sizeInBytes }
-        let latestDate = results.map { $0.lastAccessedDate }.max() ?? Date.distantPast
-
-        return "\(count)-\(totalSize)-\(latestDate.timeIntervalSince1970)"
+    private func calculateChecksum(_ data: Data) -> String {
+        // Simple checksum using hash of data
+        let hash = data.reduce(0) { $0 &+ Int($1) }
+        return String(hash)
     }
 
     /// Checks if cached data might be stale (for background refresh)
-    func hasChanged(_ results: [ScanResult], for key: String) -> Bool {
+    func hasChanged<T: Codable>(_ value: T, for key: String, as type: T.Type) -> Bool {
         guard let entry = cache[key] else { return true }
-        let currentChecksum = calculateChecksum(results)
-        return entry.checksum != currentChecksum
+        do {
+            let data = try JSONEncoder().encode(value)
+            let currentChecksum = calculateChecksum(data)
+            return entry.checksum != currentChecksum
+        } catch {
+            return true
+        }
     }
 
     // MARK: - Metadata
@@ -112,15 +123,15 @@ final class ScanCache {
 
     /// Returns human-readable cache age
     func ageDescription(for key: String) -> String? {
-        guard let age = age(for key) else { return nil }
+        guard let ageValue = self.age(for: key) else { return nil }
 
-        if age < 60 {
+        if ageValue < 60 {
             return "just now"
-        } else if age < 3600 {
-            let minutes = Int(age / 60)
+        } else if ageValue < 3600 {
+            let minutes = Int(ageValue / 60)
             return "\(minutes) min ago"
         } else {
-            let hours = Int(age / 3600)
+            let hours = Int(ageValue / 3600)
             return "\(hours) hour ago"
         }
     }

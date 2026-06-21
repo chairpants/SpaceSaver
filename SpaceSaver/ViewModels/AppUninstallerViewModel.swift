@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - AppInfo
 // Represents an installed application with its metadata.
-struct AppInfo: Identifiable {
+struct AppInfo: Identifiable, Codable {
     let id = UUID()
     let url: URL                  // Path to the .app bundle
     let name: String              // Display name
@@ -68,10 +68,9 @@ final class AppUninstallerViewModel: ObservableObject {
     // MARK: - Scan for Apps
     /// Scans /Applications and ~/Applications for installed apps with cache support.
     func scan() async {
-        // Check cache first - convert AppInfo to ScanResult for storage
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.apps),
-           let appInfos = decodeAppInfo(from: cached) {
-            apps = appInfos
+        // Check cache first
+        if let cached: [AppInfo] = ScanCache.shared.get(for: ScanCache.Keys.apps, as: [AppInfo].self) {
+            apps = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.apps)
 
             // Refresh in background if cache is older than 5 minutes
@@ -120,8 +119,7 @@ final class AppUninstallerViewModel: ObservableObject {
         apps = foundApps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
         // Store in cache
-        let cachedResults = encodeAppInfo(foundApps)
-        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.apps, ttl: .long)
+        ScanCache.shared.set(apps, for: ScanCache.Keys.apps, ttl: .long)
         cacheAge = nil
 
         isScanning = false
@@ -152,10 +150,9 @@ final class AppUninstallerViewModel: ObservableObject {
         foundApps.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
         // Only update if changed
-        let cachedResults = encodeAppInfo(foundApps)
-        if ScanCache.shared.hasChanged(cachedResults, for: ScanCache.Keys.apps) {
+        if ScanCache.shared.hasChanged(foundApps, for: ScanCache.Keys.apps, as: [AppInfo].self) {
             apps = foundApps
-            ScanCache.shared.set(cachedResults, for: ScanCache.Keys.apps, ttl: .long)
+            ScanCache.shared.set(foundApps, for: ScanCache.Keys.apps, ttl: .long)
             cacheAge = nil
         }
     }
@@ -164,34 +161,6 @@ final class AppUninstallerViewModel: ObservableObject {
     func forceRefresh() async {
         ScanCache.shared.invalidate(ScanCache.Keys.apps)
         await performFullScan()
-    }
-
-    // MARK: - Cache Encoding/Decoding
-    /// Encodes AppInfo array to ScanResult for cache storage
-    private func encodeAppInfo(_ apps: [AppInfo]) -> [ScanResult] {
-        return apps.map { app in
-            ScanResult(
-                url: app.url,
-                fileName: app.name,
-                sizeInBytes: app.sizeInBytes,
-                lastAccessedDate: app.lastOpened ?? .distantPast
-            )
-        }
-    }
-
-    /// Decodes ScanResult array back to AppInfo (partial - loses some data but sufficient for display)
-    private func decodeAppInfo(from results: [ScanResult]) -> [AppInfo]? {
-        guard !results.isEmpty else { return nil }
-        return results.map { result in
-            AppInfo(
-                url: result.url,
-                name: result.fileName,
-                bundleIdentifier: nil, // Will be fetched on full refresh
-                version: nil,          // Will be fetched on full refresh
-                sizeInBytes: result.sizeInBytes,
-                lastOpened: result.lastAccessedDate == .distantPast ? nil : result.lastAccessedDate
-            )
-        }
     }
 
     // MARK: - Load App Info
@@ -313,8 +282,7 @@ final class AppUninstallerViewModel: ObservableObject {
         isUninstalling = false
 
         // Update cache
-        let cachedResults = encodeAppInfo(apps)
-        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.apps, ttl: .long)
+        ScanCache.shared.set(apps, for: ScanCache.Keys.apps, ttl: .long)
     }
 
     /// Opens the selected app in Finder

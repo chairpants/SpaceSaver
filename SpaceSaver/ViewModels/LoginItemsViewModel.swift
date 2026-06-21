@@ -12,7 +12,7 @@ import ServiceManagement
 
 // MARK: - LoginItem
 // Represents an app or service that starts at login.
-struct LoginItem: Identifiable {
+struct LoginItem: Identifiable, Codable {
     let id = UUID()
     let name: String
     let bundleIdentifier: String
@@ -20,7 +20,7 @@ struct LoginItem: Identifiable {
     let kind: Kind
     var isEnabled: Bool
 
-    enum Kind: String {
+    enum Kind: String, Codable {
         case app = "App"
         case launchAgent = "Launch Agent"
         case launchDaemon = "Launch Daemon"
@@ -42,8 +42,8 @@ final class LoginItemsViewModel: ObservableObject {
     /// Loads the list of login items with cache support.
     func loadLoginItems() async {
         // Check cache first
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.loginItems) {
-            loginItems = decodeLoginItems(from: cached)
+        if let cached: [LoginItem] = ScanCache.shared.get(for: ScanCache.Keys.loginItems, as: [LoginItem].self) {
+            loginItems = cached
             cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.loginItems)
 
             // Refresh in background if cache is older than 2 minutes
@@ -92,8 +92,7 @@ final class LoginItemsViewModel: ObservableObject {
         loginItems = items
 
         // Store in cache
-        let cachedResults = encodeLoginItems(items)
-        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.loginItems, ttl: .medium)
+        ScanCache.shared.set(items, for: ScanCache.Keys.loginItems, ttl: .medium)
         cacheAge = nil
 
         isLoading = false
@@ -104,10 +103,9 @@ final class LoginItemsViewModel: ObservableObject {
         var items: [LoginItem] = []
         items.append(contentsOf: loadLaunchAgents())
 
-        let cachedResults = encodeLoginItems(items)
-        if ScanCache.shared.hasChanged(cachedResults, for: ScanCache.Keys.loginItems) {
+        if ScanCache.shared.hasChanged(items, for: ScanCache.Keys.loginItems, as: [LoginItem].self) {
             loginItems = items
-            ScanCache.shared.set(cachedResults, for: ScanCache.Keys.loginItems, ttl: .medium)
+            ScanCache.shared.set(items, for: ScanCache.Keys.loginItems, ttl: .medium)
             cacheAge = nil
         }
     }
@@ -116,30 +114,6 @@ final class LoginItemsViewModel: ObservableObject {
     func forceRefresh() async {
         ScanCache.shared.invalidate(ScanCache.Keys.loginItems)
         await performFullLoad()
-    }
-
-    // MARK: - Cache Encoding/Decoding
-    private func encodeLoginItems(_ items: [LoginItem]) -> [ScanResult] {
-        return items.map { item in
-            ScanResult(
-                url: item.url ?? URL(fileURLWithPath: "/tmp/loginitem"),
-                fileName: item.name,
-                sizeInBytes: item.isEnabled ? 1 : 0, // Use size as flag
-                lastAccessedDate: Date()
-            )
-        }
-    }
-
-    private func decodeLoginItems(from results: [ScanResult]) -> [LoginItem] {
-        return results.map { result in
-            LoginItem(
-                name: result.fileName,
-                bundleIdentifier: result.fileName,
-                url: result.url,
-                kind: .launchAgent,
-                isEnabled: result.sizeInBytes > 0
-            )
-        }
     }
 
     // MARK: - Toggle Login Item

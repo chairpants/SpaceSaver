@@ -34,23 +34,26 @@ final class TrashViewModel: ObservableObject {
     // MARK: - Cache
     @Published var cacheAge: String? = nil
 
+    // Simple struct for caching trash stats
+    private struct TrashStats: Codable {
+        let size: Int64
+        let count: Int
+    }
+
     // MARK: - Refresh Trash Info
     /// Queries the size and contents of the Trash folder with cache support
     func refresh() async {
-        // Check cache first - store as simple struct
-        if let cached = ScanCache.shared.get(for: ScanCache.Keys.trash) {
-            // Extract size and count from cached data
-            if cached.count >= 2 {
-                trashSize = cached[0].sizeInBytes
-                trashItemCount = Int(cached[0].lastAccessedDate.timeIntervalSince1970) // Hack: using date to store count
-                cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.trash)
+        // Check cache first
+        if let cached: TrashStats = ScanCache.shared.get(for: ScanCache.Keys.trash, as: TrashStats.self) {
+            trashSize = cached.size
+            trashItemCount = cached.count
+            cacheAge = ScanCache.shared.ageDescription(for: ScanCache.Keys.trash)
 
-                // Refresh in background if cache is older than 1 minute (trash changes often)
-                if let age = ScanCache.shared.age(for: ScanCache.Keys.trash), age > 60 {
-                    await refreshInBackground()
-                }
-                return
+            // Refresh in background if cache is older than 1 minute
+            if let age = ScanCache.shared.age(for: ScanCache.Keys.trash), age > 60 {
+                await refreshInBackground()
             }
+            return
         }
 
         // No cache - do full refresh
@@ -66,14 +69,9 @@ final class TrashViewModel: ObservableObject {
         trashSize = size
         trashItemCount = count
 
-        // Store in cache using ScanResult as carrier (hack but works)
-        let cachedResults = [ScanResult(
-            url: URL(fileURLWithPath: "/tmp/trash"),
-            fileName: "trash",
-            sizeInBytes: size,
-            lastAccessedDate: Date(timeIntervalSince1970: Double(count))
-        )]
-        ScanCache.shared.set(cachedResults, for: ScanCache.Keys.trash, ttl: .short)
+        // Store in cache
+        let stats = TrashStats(size: size, count: count)
+        ScanCache.shared.set(stats, for: ScanCache.Keys.trash, ttl: .short)
         cacheAge = nil
 
         isLoading = false
@@ -107,16 +105,11 @@ final class TrashViewModel: ObservableObject {
         let (size, count) = await calculateTrashStats()
 
         // Only update if changed
-        if trashSize != size || trashItemCount != count {
+        let newStats = TrashStats(size: size, count: count)
+        if ScanCache.shared.hasChanged(newStats, for: ScanCache.Keys.trash, as: TrashStats.self) {
             trashSize = size
             trashItemCount = count
-            let cachedResults = [ScanResult(
-                url: URL(fileURLWithPath: "/tmp/trash"),
-                fileName: "trash",
-                sizeInBytes: size,
-                lastAccessedDate: Date(timeIntervalSince1970: Double(count))
-            )]
-            ScanCache.shared.set(cachedResults, for: ScanCache.Keys.trash, ttl: .short)
+            ScanCache.shared.set(newStats, for: ScanCache.Keys.trash, ttl: .short)
             cacheAge = nil
         }
     }
