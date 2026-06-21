@@ -41,17 +41,13 @@
 
 > ⚠️ **Note:** Full Disk Access is required to scan `~/Library`, system caches, and other protected locations.
 
-### 🍺 Homebrew Install
+### 🍺 Homebrew Install (Simple)
 
 ```bash
-brew tap yourusername/spacesaver
-brew install --cask spacesaver
+brew install --cask https://raw.githubusercontent.com/chairpants/SpaceSaver/main/homebrew/spacesaver.rb
 ```
 
-Or install directly:
-```bash
-brew install --cask https://raw.githubusercontent.com/yourusername/homebrew-spacesaver/main/Casks/spacesaver.rb
-```
+Or download manually from [Releases](../../releases).
 
 ---
 
@@ -90,10 +86,10 @@ View and control what launches at startup — LaunchAgents and Login Items.
 ## 📸 Screenshots
 
 <p align="center">
-  <em>Beautiful dark mode interface with native macOS design</em>
+  <img src="screenshots/01-dashboard.png" width="800" alt="SpaceSaver Dashboard">
+  <br>
+  <em>Dashboard — Visual overview of disk usage with storage breakdown</em>
 </p>
-
-*(Screenshots coming soon — DM me if you take nice ones!)*
 
 ---
 
