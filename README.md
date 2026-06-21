@@ -5,131 +5,109 @@
 </p>
 
 <p align="center">
-  <strong>A free, open-source macOS app to help you reclaim disk space.</strong><br>
-  No subscriptions, no paywalls — just clean disk space.
+  <strong>Reclaim disk space on your Mac — free, open-source, no BS.</strong><br>
+  No subscriptions, no paywalls, no data collection. Just a clean Mac.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-13+-blue?logo=apple" alt="macOS 13+">
   <img src="https://img.shields.io/badge/Swift-SwiftUI-orange?logo=swift" alt="SwiftUI">
-  <img src="https://img.shields.io/badge/license-Free-green" alt="License: Free">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/downloads-github%20releases-blue" alt="Download from Releases">
 </p>
+
+<p align="center">
+  <a href="#-download"><strong>Download</strong></a> •
+  <a href="#-features"><strong>Features</strong></a> •
+  <a href="#-screenshots"><strong>Screenshots</strong></a> •
+  <a href="#-building-from-source"><strong>Build</strong></a>
+</p>
+
+---
+
+## 🚀 Download
+
+**Latest Release:** [SpaceSaver v1.0.0](https://github.com/yourusername/SpaceSaver/releases/latest)
+
+| Version | Download | Requirements |
+|---------|----------|--------------|
+| Latest | [SpaceSaver.app.zip](https://github.com/yourusername/SpaceSaver/releases/latest/download/SpaceSaver.app.zip) | macOS 13+ |
+
+**Installation:**
+1. Download `SpaceSaver.app.zip` from the [Releases page](../../releases)
+2. Unzip and drag `SpaceSaver.app` to your **Applications** folder
+3. **Grant Full Disk Access** (System Settings → Privacy & Security → Full Disk Access → Add SpaceSaver)
+4. Launch and start cleaning!
+
+> ⚠️ **Note:** Full Disk Access is required to scan `~/Library`, system caches, and other protected locations.
 
 ---
 
 ## ✨ Features
 
-SpaceSaver combines powerful disk cleaning tools with a beautiful, native macOS interface.
-
 ### 📊 Dashboard
-- **Visual Disk Overview** — Animated progress ring showing used vs available space
-- **Storage Breakdown** — Horizontal bar chart of disk usage by category
-- **Quick Actions** — One-click shortcuts to common cleaning tasks
-- **Color-coded Status** — Green (healthy), orange (warning), red (critical) disk usage indicators
+Visual overview of your disk with animated progress rings, storage breakdown by category, and quick-action shortcuts.
 
 ### 📁 Large Files Scanner
-- Scan entire home directory for files over customizable thresholds
-- **Size Filters** — 50 MB, 100 MB, 250 MB, 500 MB, 1 GB minimums
-- **Sortable Table** — Sort by name, size, last opened, or path
-- **Reveal in Finder** — Jump directly to file locations
-- **Safe Deletion** — Move to Trash with confirmation (never permanent)
+Find massive files eating your space. Filter by size (50MB to 1GB+), sort by name/size/date, and delete with one click.
 
 ### 📋 Duplicate Finder
-- **Content-based Detection** — SHA-256 hash verification ensures true duplicates
-- **Size Grouping** — Fast initial filtering by file size
-- **Smart Grouping** — View duplicate files grouped by matching content
-- **Wasted Space Display** — See exactly how much space duplicates consume
-- **Selective Deletion** — Keep one copy, delete the rest
+Content-based duplicate detection using SHA-256 hashing. Groups duplicates, shows wasted space, and lets you clean selectively.
 
 ### 🧹 Cache Cleaner
-- **One-click Cleaning** for common cache locations:
-  - Xcode Derived Data
-  - Safari, Chrome, Firefox caches
-  - System and user caches
-  - Application support files
-- **Category Cards** — Visual breakdown of each cache type with sizes
-- **Caution Indicators** — Warns about caches that may affect app performance
+One-click cleaning for:
+- Xcode Derived Data (often GBs!)
+- Browser caches (Safari, Chrome, Firefox)
+- System and user caches
+- Application support files
 
 ### 🗑️ Trash Manager
-- **Visual Gauge** — See Trash size at a glance
-- **One-click Empty** — Empty Trash with confirmation
-- **Open in Finder** — Browse Trash before emptying
+Visual gauge of your Trash size with one-click empty.
 
 ### 📥 Downloads Cleaner
-- **Smart Filters** — Filter by age (30/60/90/180/365 days) or size
-- **Default View** — Shows all files by default
-- **Adaptive Empty State** — Smart messaging when filters hide files
-- **Quick Actions** — Select all, deselect all, delete selected
+Smart filters by age (30/60/90/180/365 days) or file size. Find those ancient downloads you forgot about.
 
 ### 📦 App Uninstaller
-- **App Listing** — Browse installed applications
-- **Leftover Detection** — Find support files in Application Support, Preferences, Caches
-- **Complete Removal** — Delete apps and their associated files
+Remove apps **and** their leftover files scattered across Library folders.
 
 ### 🔐 Login Items Manager
-- **Launch Agents** — View and toggle startup items
-- **Login Items** — Manage apps that open at login
-- **Status Indicators** — See which items are currently enabled
-
----
-
-## 🎨 Design Highlights
-
-SpaceSaver features a premium macOS-native design:
-
-| Feature | Description |
-|---------|-------------|
-| **Glassmorphism Cards** | Rounded cards with subtle shadows and material backgrounds |
-| **Animated Progress Ring** | Smooth gradient ring showing disk usage with entrance animations |
-| **Empty States** | Beautiful animated illustrations when no results are found |
-| **SF Symbols** | Hierarchical rendering with section-specific accent colors |
-| **Consistent Spacing** | Design system with standardized spacing throughout |
-| **Hierarchical Navigation** | Three-column layout potential (future enhancement) |
+View and control what launches at startup — LaunchAgents and Login Items.
 
 ---
 
 ## 📸 Screenshots
 
 <p align="center">
-  <em>Screenshots coming soon — the app looks great in dark mode too!</em>
+  <em>Beautiful dark mode interface with native macOS design</em>
 </p>
+
+*(Screenshots coming soon — DM me if you take nice ones!)*
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Building from Source
+
+Want to hack on it? Build it yourself:
 
 ### Requirements
+- macOS 13.0+ (Ventura)
+- Xcode 15+ (built with Xcode 26)
 
-- **macOS 13.0 (Ventura)** or later
-- **Xcode 15+** to build (developed with Xcode 26)
-- **Full Disk Access** recommended — System Settings → Privacy & Security → Full Disk Access
-
-> ⚠️ **Note:** Full Disk Access is needed to scan protected directories like `~/Library`. Without it, some scan results will be empty.
-
-### Building
-
-#### Option A: Open in Xcode (Recommended)
+### Clone & Build
 
 ```bash
+# Clone the repo
+git clone https://github.com/yourusername/SpaceSaver.git
+cd SpaceSaver
+
+# Open in Xcode
 open SpaceSaver.xcodeproj
-```
 
-Then press `⌘R` to build and run.
-
-#### Option B: Command Line
-
-```bash
-# Switch to full Xcode first (if not already done)
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-# Build Debug version
-xcodebuild -project SpaceSaver.xcodeproj -scheme SpaceSaver -configuration Debug build
-
-# Build Release version
+# Or build from command line
 xcodebuild -project SpaceSaver.xcodeproj -scheme SpaceSaver -configuration Release build
 ```
 
-#### Option C: Regenerate Project
+### Regenerate Project
 
 If the `.xcodeproj` gets out of sync:
 
@@ -137,173 +115,72 @@ If the `.xcodeproj` gets out of sync:
 python3 generate_project.py
 ```
 
-Then open the freshly generated `SpaceSaver.xcodeproj`.
-
----
-
-## 📁 Project Structure
-
-```
-SpaceSaver/
-├── SpaceSaver.xcodeproj           # Xcode project (generated)
-├── generate_project.py              # Project generator
-├── generate_icon.py               # Icon generator
-├── README.md
-├── LICENSE
-└── SpaceSaver/                    # App source code
-    ├── SpaceSaverApp.swift        # App entry point
-    ├── ContentView.swift          # Sidebar navigation
-    ├── Info.plist
-    ├── Entitlements.plist
-    ├── SpaceSaver-Icon.svg        # App icon source
-    ├── Assets.xcassets/           # Icons, accent colors
-    │   └── AppIcon.appiconset/    # macOS app icons (10 sizes)
-    ├── Models/                    # Data models
-    │   ├── DiskInfo.swift
-    │   ├── ScanResult.swift
-    │   └── CacheCategory.swift
-    ├── ViewModels/                # Business logic
-    │   ├── DashboardViewModel.swift
-    │   ├── LargeFilesViewModel.swift
-    │   ├── DuplicateViewModel.swift
-    │   ├── CacheCleanerViewModel.swift
-    │   ├── TrashViewModel.swift
-    │   ├── DownloadsViewModel.swift
-    │   ├── AppUninstallerViewModel.swift
-    │   └── LoginItemsViewModel.swift
-    ├── Views/                     # SwiftUI screens
-    │   ├── DashboardView.swift
-    │   ├── LargeFilesView.swift
-    │   ├── DuplicateFinderView.swift
-    │   ├── CacheCleanerView.swift
-    │   ├── CacheCategoryDetailView.swift
-    │   ├── TrashManagerView.swift
-    │   ├── DownloadsCleanerView.swift
-    │   ├── AppUninstallerView.swift
-    │   ├── LoginItemsView.swift
-    │   └── Components/            # Reusable UI components
-    │       ├── CardContainer.swift
-    │       ├── AnimatedProgressRing.swift
-    │       ├── EmptyStateView.swift
-    │       ├── ProgressView+.swift
-    │       ├── FileSizeFormatter.swift
-    │       ├── ConfirmDeleteView.swift
-    │       └── StatusBadge.swift
-    ├── Utilities/                 # Helper utilities
-    │   ├── DiskUsage.swift
-    │   ├── FileScanner.swift
-    │   ├── CacheLocator.swift
-    │   ├── Color+SpaceSaver.swift
-    │   └── Spacing.swift
-    └── ViewModels/                # (see above)
-```
-
 ---
 
 ## 🏗️ Architecture
 
-SpaceSaver follows modern SwiftUI patterns:
-
-### MVVM Pattern
-- Each feature has a **View** + **ViewModel** pair
-- ViewModels are `@MainActor` `ObservableObject` classes with `@Published` properties
-- Views observe state changes and react accordingly
-
-### Background Processing
-- All file scanning runs on background threads via `Task.detached`
-- Keeps UI responsive during long operations
-- Progress callbacks update UI on `@MainActor`
-
-### Safety First
-- **All deletions move files to Trash** — never permanent delete
-- Bulk operations require confirmation dialogs
-- Error handling with user-friendly messages
-
-### Non-Sandboxed
-- Runs outside App Sandbox for full filesystem access
-- Cannot be distributed via Mac App Store
-- Can be shared directly (notarize for Gatekeeper compliance)
+- **SwiftUI** — Native macOS interface
+- **MVVM Pattern** — Clean separation of concerns
+- **Background Processing** — File scanning on detached threads, UI stays responsive
+- **Safety First** — All deletions move to Trash (never permanent)
+- **Non-Sandboxed** — Full filesystem access (why it's not on App Store)
 
 ---
 
 ## 🔒 Permissions
 
-### Full Disk Access
+**Full Disk Access** is needed for scanning protected directories:
 
-SpaceSaver needs Full Disk Access to scan protected directories:
+1. System Settings → Privacy & Security → Full Disk Access
+2. Click **+** and add **SpaceSaver.app**
+3. Restart the app
 
-1. Open **System Settings** → **Privacy & Security** → **Full Disk Access**
-2. Click the **+** button
-3. Add **SpaceSaver.app**
-4. Restart SpaceSaver
-
-Without this permission, scans of `~/Library`, `~/Containers`, and system directories will return incomplete results.
-
----
-
-## 📦 Distribution
-
-### Share Buildable Source
-
-Zip the entire project folder:
-
-```bash
-zip -r SpaceSaver-source.zip SpaceSaver/
-```
-
-### Build Release App
-
-1. **Build Release** in Xcode: `Product → Archive`
-2. **Distribute**: Click "Distribute App" → "Copy App"
-3. **Save to**: `/Applications/`
-
-### Notarize for Gatekeeper
-
-```bash
-# Create zip of the app
-zip -r SpaceSaver.app.zip SpaceSaver.app
-
-# Submit for notarization
-xcrun notarytool submit SpaceSaver.app.zip \
-  --apple-id YOUR_EMAIL@example.com \
-  --team-id YOUR_TEAM_ID \
-  --wait
-
-# Staple the ticket to the app
-xcrun stapler staple SpaceSaver.app
-```
+Without this, scans of `~/Library` and system directories will be incomplete.
 
 ---
 
 ## 🛣️ Roadmap
 
-Potential future enhancements:
-
-- [ ] **Three-column layout** — Sidebar → List → Inspector panels
-- [ ] **Quick Look integration** — Space bar preview for files
-- [ ] **Menu bar icon** — Quick access from menu bar
+- [ ] **Sunburst visualization** — DaisyDisk-style disk map
+- [ ] **Menu bar integration** — Quick access from menu bar
 - [ ] **Scheduled cleaning** — Automated cache cleanup
-- [ ] **Duplicate image detection** — Visual similarity matching
-- [ ] **Language localization** — Multi-language support
+- [ ] **Duplicate image detection** — Visual similarity (not just hashes)
+- [ ] **Quick Look** — Space bar preview for files
+
+Got ideas? [Open an issue](../../issues)!
 
 ---
 
-## 🙏 Credits
+## 🤖 Built With AI
 
-- Built with **SwiftUI** and **Swift**
-- Icons using **SF Symbols**
-- App icon designed in-house
+This project was created with the help of:
+
+- **Claude Code** (Anthropic) — Primary development, architecture, and implementation
+- **GLM-5.2** (Zhipu AI / Ollama) — Code review and optimization suggestions
+- **Kimi-k2.5** (Moonshot AI) — Additional development assistance and debugging
+
+A testament to what's possible when human direction meets AI capability. The entire app — from concept to working codebase — was built through collaborative AI-human pair programming.
 
 ---
 
 ## 📄 License
 
-Free to use, modify, and share. No warranty — use at your own risk.
+MIT License — Free to use, modify, and distribute. See [LICENSE](LICENSE) for details.
 
-**Always review what you're deleting before confirming.** SpaceSaver moves files to Trash (not permanent deletion), but recovering from Trash still requires manual action.
+**Use at your own risk.** SpaceSaver moves files to Trash (recoverable), but always review before confirming deletions.
+
+---
+
+## 🏷️ Tags
+
+`macos` `disk-cleanup` `storage-manager` `swift` `swiftui` `open-source` `free` `xcode` `cache-cleaner` `duplicate-finder` `large-files` `trash-manager` `app-uninstaller` `system-tools` `disk-space` `file-management` `macos-app` `native-macos`
 
 ---
 
 <p align="center">
-  Made with ❤️ for macOS users who need more disk space.
+  Made with ❤️ (and AI) for Mac users running low on space.
+</p>
+
+<p align="center">
+  <a href="https://github.com/yourusername/SpaceSaver/stargazers">⭐ Star this repo</a> if it helped you clean up your Mac!
 </p>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Enable App Sandbox (Required for Mac App Store) -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- File access entitlements -->
+    <!-- Allow read access to files the user selects -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- Allow read/write access to Downloads folder -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+
+    <!-- Network access (for update checks, if needed) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Read-only access to user's home directory files (for scanning) -->
+    <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+    <array/>
+</dict>
+</plist>
