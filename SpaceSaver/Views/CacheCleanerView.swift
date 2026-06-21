@@ -37,6 +37,14 @@ struct CacheCleanerView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .alert("Clean Selected Caches?", isPresented: $viewModel.showCleanConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Move to Trash", role: .destructive) {
+                Task { await viewModel.cleanSelected() }
+            }
+        } message: {
+            Text("This will move \(viewModel.formattedSelectedSize) of cache files to the Trash.")
+        }
         .sheet(item: $detailCategory) { category in
             CacheCategoryDetailView(category: category)
         }
