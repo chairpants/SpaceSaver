@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "E91701C17BC64256B1B31642"
+               BlueprintIdentifier = "BC1BBF009B4A421D86E7637F"
                BuildableName = "SpaceSaver.app"
                BlueprintName = "SpaceSaver"
                ReferencedContainer = "container:SpaceSaver.xcodeproj">
@@ -43,7 +43,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "E91701C17BC64256B1B31642"
+            BlueprintIdentifier = "BC1BBF009B4A421D86E7637F"
             BuildableName = "SpaceSaver.app"
             BlueprintName = "SpaceSaver"
             ReferencedContainer = "container:SpaceSaver.xcodeproj">
