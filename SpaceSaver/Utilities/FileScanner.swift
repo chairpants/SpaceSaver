@@ -49,7 +49,9 @@ final class FileScanner {
 
             var filesProcessed = 0
 
-            for case let url as URL in enumerator {
+            // Convert to array to avoid Swift 6 async iterator issues
+            let urls = enumerator.allObjects.compactMap { $0 as? URL }
+            for url in urls {
                 filesProcessed += 1
 
                 // Report progress every 100 files
@@ -143,7 +145,9 @@ final class FileScanner {
                 return []
             }
 
-            for case let url as URL in enumerator {
+            // Convert to array to avoid Swift 6 async iterator issues
+            let urls = enumerator.allObjects.compactMap { $0 as? URL }
+            for url in urls {
                 filesProcessed += 1
                 if filesProcessed % 100 == 0 {
                     await MainActor.run { progress(min(0.4, Double(filesProcessed) / 100000)) }
